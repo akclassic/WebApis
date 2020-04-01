@@ -1,9 +1,6 @@
 ﻿using SampleApi.Filters;
 using SampleApi.Models;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -18,22 +15,15 @@ namespace SampleApi.Controllers
     [BasicAuthentication]
     public class EmployeeController : ApiController
     {
-        string connectionString = ConfigurationManager.ConnectionStrings["sampledbconnection"].ConnectionString;
+        //string connectionString = ConfigurationManager.ConnectionStrings["sampledbconnection"].ConnectionString;
         string token = Thread.CurrentPrincipal.Identity.Name;
         // GET: api/Employee
         public async Task<HttpResponseMessage> Get()
         {
-            BussinessLayer bussinessLayer = new BussinessLayer();
-            var UserList = await bussinessLayer.EmployeesList();
-            return Request.CreateResponse(HttpStatusCode.OK, UserList);
+            BussinessLayer bussinesslayer = new BussinessLayer();
+            var userlist = await bussinesslayer.EmployeesList();
+            return Request.CreateResponse(HttpStatusCode.OK, userlist);
         }
-
-        //public HttpResponseMessage Get()
-        //{
-        //    BussinessLayer bussinessLayer = new BussinessLayer();
-        //    var UserList = bussinessLayer.EmployeesList;
-        //    return Request.CreateResponse(HttpStatusCode.OK, UserList);
-        //}
 
         //public HttpResponseMessage GetEmployees()
         //{
@@ -48,7 +38,7 @@ namespace SampleApi.Controllers
         {
             BussinessLayer bussinessLayer = new BussinessLayer();
             var UserList = await bussinessLayer.EmployeesList();
-            var user = UserList.Where(u => u.Id == id);
+            var user = UserList.Where(u => u.id == id);
             if (user != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, user);
@@ -64,17 +54,17 @@ namespace SampleApi.Controllers
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using(var context = new sampledbcontext())
                 {
-                    string query = "INSERT INTO Employee Values( @name, @salary, @designation)";
-                    connection.Open();
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("name", employee.Name);
-                        command.Parameters.AddWithValue("salary", employee.Salary);
-                        command.Parameters.AddWithValue("designation", employee.Designation);
-                        command.ExecuteNonQuery();
-                    }
+                    var emp = new Employee()
+                    { 
+                        name = employee.name,
+                        salary = employee.salary,
+                        designation = employee.designation
+                    };
+                    context.Employee.Add(emp);
+
+                    context.SaveChanges();
                 }
                 return Request.CreateResponse(HttpStatusCode.Created, employee);
             }
@@ -87,46 +77,38 @@ namespace SampleApi.Controllers
         }
 
         // PUT: api/Employee/5
-        public HttpResponseMessage Put(int id, [FromBody]Employee emp)
+        public HttpResponseMessage Put(int id, [FromBody]Employee employee)
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using(var context = new sampledbcontext())
                 {
-                    string query = "UPDATE Employee SET name = @name, salary = @salary, designation = @designation WHERE id=@id";
-                    connection.Open();
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("id", id);
-                        command.Parameters.AddWithValue("name", emp.Name);
-                        command.Parameters.AddWithValue("salary", emp.Salary);
-                        command.Parameters.AddWithValue("designation", emp.Designation);
-                        command.ExecuteNonQuery();
-                    }
+                    var emp = context.Employee.FirstOrDefault(e => e.id == id);
+                    emp.name = employee.name;
+                    emp.salary = employee.salary;
+                    emp.designation = employee.designation;
+                    context.SaveChanges();
                 }
-                return Request.CreateResponse(HttpStatusCode.OK, emp);
+                return Request.CreateResponse(HttpStatusCode.OK, employee);
             }
             catch (Exception ex)
-            { 
+            {
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex);
             }
         }
 
-        // DELETE: api/Employee/5
+        //// DELETE: api/Employee/5
         public HttpResponseMessage Delete(int id)
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (var context = new sampledbcontext())
                 {
-                    string query = "DELETE FROM EMPLOYEE WHERE id=@id";
-                    connection.Open();
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("id", id);
-                        command.ExecuteNonQuery();
-                    }
+                    var employee = context.Employee.FirstOrDefault(emp => emp.id == id);
+                    context.Employee.Remove(employee);
+                    context.SaveChanges();
                 }
+
                 return Request.CreateResponse(HttpStatusCode.OK, "User with id= " + id + " deleted successfully");
             }
             catch (Exception ex)

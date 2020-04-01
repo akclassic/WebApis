@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SampleApi.Models;
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
-using SampleApi.Models;
 using System.Web.Http.Cors;
 
 namespace SampleApi.Controllers
@@ -13,28 +13,28 @@ namespace SampleApi.Controllers
     public class UsersController : ApiController
     {
         // GET: api/Users
-        public HttpResponseMessage Get()
+        public async Task<HttpResponseMessage> Get()
         {
             BussinessLayer bussinessLayer = new BussinessLayer();
-            var UserList = bussinessLayer.UsersList;
+            var UserList =  await bussinessLayer.UsersList();
             return Request.CreateResponse(HttpStatusCode.OK, UserList);
         }
 
         // GET: api/Users/5
-        public string Get(int id)
-        {
-            return "value";
-        }
+        //public string Get(int id)
+        //{
+        //    return "value";
+        //}
 
         // POST: api/Users
-        public HttpResponseMessage Post([FromBody]Users data)
+        public async Task<HttpResponseMessage> Post([FromBody]Users data)
         {
             BussinessLayer bussinessLayer = new BussinessLayer();
-            var UserList = bussinessLayer.UsersList;
-            bool isValidUser = UserList.Any(u => u.Username == data.Username && u.Password == data.Password);
+            var UserList = await bussinessLayer.UsersList();
+            bool isValidUser = UserList.Any(u => u.username == data.username && u.password == data.password);
             if (isValidUser)
             {
-                Users user = UserList.Where(u => u.Username == data.Username && u.Password == data.Password).FirstOrDefault();
+                Users user = UserList.Where(u => u.username == data.username && u.password == data.password).FirstOrDefault();
                 return Request.CreateResponse(HttpStatusCode.OK, user);
             }
             else
@@ -44,13 +44,13 @@ namespace SampleApi.Controllers
         }
 
         // PUT: api/Users/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+        //public void Put(int id, [FromBody]string value)
+        //{
+        //}
 
-        // DELETE: api/Users/5
-        public void Delete(int id)
-        {
-        }
+        //// DELETE: api/Users/5
+        //public void Delete(int id)
+        //{
+        //}
     }
 }
